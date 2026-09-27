@@ -6,6 +6,7 @@ using ImageView
 using ..Objects
 using ..CameraModule
 using ..Lighting
+using ..GPUPreprocess
 
 #Function to project a vertex from the 3D space onto the 2D screen
 function project_perspective(point::Union{Point, Coordinates, Vertex}, fov::Float64, aspect_ratio::Float64, width::Int, height::Int)
@@ -202,7 +203,7 @@ end
 
 #Function used to draw an entire mesh to the screen. Currently, it's using the phong shading lighting, but you can change it for gouraud, or flat shading if you change the code a bit.
 function draw_mesh(S, meshes::Vector{Mesh}, fov::Float64, aspect_ratio::Float64, width::Int, height::Int, main_light, wireframe::Bool=false)
-    Z_buffer = fill(Inf, size(S))
+    Z_buffer = fill(Inf32, size(S))
 
     for mesh in meshes
         for vi in 1:length(mesh.vertices)
@@ -245,7 +246,9 @@ function draw_mesh(S, meshes::Vector{Mesh}, fov::Float64, aspect_ratio::Float64,
 
                     # draw_triangle(S, p1, p2, p3, lit_color, Z_buffer)
 
-                    fill_triangle_phong(S, triangle, mesh, p1, p2, p3, Z_buffer, main_light.rotation)
+                    #fill_triangle_phong(S, triangle, mesh, p1, p2, p3, Z_buffer, main_light.rotation)
+
+                    prepare_phong_fill_single_triangle(S, triangle, mesh, p1, p2, p3, Z_buffer, main_light.rotation)
                 end
             end
         end

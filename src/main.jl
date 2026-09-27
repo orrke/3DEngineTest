@@ -1,11 +1,13 @@
-using Images
-using ImageView
 using Makie
 using GLMakie
+using Images
+using ImageView
 
 include("objects.jl")
+include("gpu_code.jl")
 include("lighting.jl")
 include("camera.jl")
+include("gpu_preprocess.jl")
 include("draw.jl")
 
 using .Objects
@@ -17,7 +19,7 @@ height = 1000
 width = 1000
 
 #Create the screen buffer (Framebuffer)
-screen = zeros(RGB{Float64}, (height, width))
+screen = zeros(RGB{Float32}, (height, width))
 
 cube = Objects.create_cube(Objects.Coordinates(0, 0, 0), Objects.Rotation(0, 0, 0), 10)
 #plane = Objects.create_plane(Objects.Coordinates(-10, 0, 15), Objects.Rotation(0, 0, 0), 20, 20)
@@ -26,10 +28,10 @@ cube = Objects.create_cube(Objects.Coordinates(0, 0, 0), Objects.Rotation(0, 0, 
 world_space = [cube]
 
 #Main light, currently only one since I haven't implemented multiple lights yet
-main_light = Light(Rotation(-1,-1,0))
+main_light = Lighting.Light(Objects.Rotation(-1,-1,0))
 
 #The camera
-camera = CameraModule.camera(Objects.Coordinates(0, 0, -10), Objects.Rotation(0, 0, 0))
+camera = CameraModule.camera(Objects.Coordinates(0, -10, -20), Objects.Rotation(45, 0, 0))
 
 #Translation to camera space
 camera_space = CameraModule.world_space_translation(camera, world_space)
@@ -43,17 +45,35 @@ ax = GLMakie.Axis(fig[1, 1])
 img = image!(ax, screen)
 
 #Slide to rotate the cube, it's for testing the lighting algorithm
-slider = Slider(fig[2, 1], range =  0:1:360, startvalue = 5.0)
+sliderx = Slider(fig[2, 1], range =  0:1:360, startvalue = 5.0)
+slidery = Slider(fig[3, 1], range =  0:1:360, startvalue = 5.0)
+sliderz = Slider(fig[4, 1], range =  0:1:360, startvalue = 5.0)
 
-on(slider.value) do val
-    camera.rotation.roll = val
-
+on(sliderx.value) do val
+    camera.rotation.pitch = val
     camera_space = CameraModule.world_space_translation(camera, world_space)
-    screen = zeros(RGB{Float64}, (height, width))
+    screen = zeros(RGB{Float32}, (height, width))
     Draw.draw_mesh(screen, camera_space, 90.0, width/height, width, height, main_light)
+    img[1] = screen
+end
 
+on(slidery.value) do val
+    camera.rotation.yaw = val
+    camera_space = CameraModule.world_space_translation(camera, world_space)
+    screen = zeros(RGB{Float32}, (height, width))
+    Draw.draw_mesh(screen, camera_space, 90.0, width/height, width, height, main_light)
+    img[1] = screen
+end
+
+on(sliderz.value) do val
+    camera.rotation.roll = val
+    camera_space = CameraModule.world_space_translation(camera, world_space)
+    screen = zeros(RGB{Float32}, (height, width))
+    Draw.draw_mesh(screen, camera_space, 90.0, width/height, width, height, main_light, true)
     img[1] = screen
 end
 
 #Display the image onto the screen.
 display(fig)
+
+#imshow(screen)

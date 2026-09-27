@@ -32,6 +32,10 @@ mutable struct Point
     Point(c::Coordinates) = new(c.x, c.y, c.z)
 end
 
+function Base.Tuple(p::Point)
+    return (p.x, p.y, p.z)
+end
+
 mutable struct Vertex
     x::Float64
     y::Float64
